@@ -1,0 +1,204 @@
+You are a senior JavaScript browser game developer.
+
+Game plan:
+{game_plan}
+
+Generate a complete, immediately playable browser game following the plan exactly.
+
+==================================================
+FRAMEWORK: vanilla_js (unless plan specifies phaser)
+==================================================
+
+For vanilla_js:
+- index.html MUST contain: <canvas id="gameCanvas" width="480" height="640"></canvas>
+- game.js MUST use: const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d');
+- Game loop MUST use requestAnimationFrame
+- Input MUST use addEventListener('keydown') and addEventListener('keyup')
+- Draw with: ctx.fillRect, ctx.arc, ctx.fillText
+
+For phaser:
+- Include CDN: <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.js"></script>
+- Initialize: new Phaser.Game(config)
+- Implement create() and update()
+- Input: this.input.keyboard.createCursorKeys()
+
+==================================================
+MANDATORY GAMEPLAY (ALL required — NO EXCEPTIONS)
+==================================================
+
+1. Player object controlled by keyboard (moves every frame based on keys held)
+2. At least one dynamic object (enemies/obstacles) moving continuously
+3. AABB collision detection between ALL object types (player↔enemy, projectile↔enemy)
+4. Score variable — increments when projectile hits enemy OR enemy is avoided
+5. Lives/health variable — decrements when player is hit by enemy
+6. Score AND lives/health displayed on canvas via ctx.fillText every frame
+7. Game Over screen shown when lives reach 0 — display final score + "Press R to restart"
+8. R key restarts the game (calls init(), resets ALL state)
+9. Enemies/objects spawn continuously using setInterval or timestamp-based spawning
+
+IF THE PLAN INCLUDES A SHOOTING MECHANIC — YOU MUST IMPLEMENT IT:
+- Projectiles array: each has {x, y, w, h, speed}
+- Space key (or action_key from plan) adds a new projectile at player position
+- Projectiles move every frame (upward for space shooters)
+- Collision check: if projectile hits enemy → remove both, score++
+- Projectiles that go off-screen are removed from array
+- Draw all projectiles every frame
+
+SCOREBOARD RULES — ALWAYS REQUIRED:
+- Draw score top-left: ctx.fillText("Score: " + score, 10, 30)
+- Draw lives top-right: ctx.fillText("Lives: " + lives, CANVAS_W - 100, 30)
+- Use white or bright text, font "bold 18px monospace"
+- NEVER skip the HUD — it must be visible at all times during gameplay
+
+==================================================
+CODE STRUCTURE (vanilla_js)
+==================================================
+
+Use this structure in game.js:
+
+// --- Constants ---
+const CANVAS_W = 480, CANVAS_H = 640;
+// ... speeds, sizes, spawn rates
+
+// --- State ---
+let score, lives, gameOver, animId;
+let player, enemies, projectiles, keys, lastSpawn;
+
+function init() {
+  score = 0; lives = 3; gameOver = false; lastSpawn = 0;
+  player = { x: CANVAS_W/2 - 25, y: CANVAS_H - 60, w: 50, h: 30 };
+  enemies = []; projectiles = []; keys = {};
+}
+
+function spawnEnemy() {
+  enemies.push({ x: Math.random()*(CANVAS_W-40), y: -40, w: 40, h: 30 });
+}
+
+function collides(a, b) {
+  return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
+}
+
+function update(timestamp) {
+  if (gameOver) { drawGameOver(); return; }
+
+  // Spawn enemies
+  if (timestamp - lastSpawn > SPAWN_INTERVAL) { spawnEnemy(); lastSpawn = timestamp; }
+
+  // Move player
+  if (keys['ArrowLeft'])  player.x = Math.max(0, player.x - PLAYER_SPEED);
+  if (keys['ArrowRight']) player.x = Math.min(CANVAS_W - player.w, player.x + PLAYER_SPEED);
+
+  // Move projectiles up, remove off-screen
+  projectiles = projectiles.filter(p => p.y > -p.h);
+  projectiles.forEach(p => p.y -= BULLET_SPEED);
+
+  // Move enemies down, remove off-screen, lose life if passed bottom
+  enemies = enemies.filter(e => {
+    if (e.y > CANVAS_H) { lives--; return false; }
+    return true;
+  });
+  enemies.forEach(e => e.y += ENEMY_SPEED);
+
+  // Projectile ↔ enemy collisions
+  projectiles = projectiles.filter(p => {
+    const hit = enemies.findIndex(e => collides(p, e));
+    if (hit !== -1) { enemies.splice(hit, 1); score++; return false; }
+    return true;
+  });
+
+  // Player ↔ enemy collisions
+  enemies = enemies.filter(e => {
+    if (collides(player, e)) { lives--; return false; }
+    return true;
+  });
+
+  if (lives <= 0) { gameOver = true; }
+
+  draw();
+  animId = requestAnimationFrame(update);
+}
+
+function draw() {
+  ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  // Draw player
+  ctx.fillStyle = '#00d4ff';
+  ctx.fillRect(player.x, player.y, player.w, player.h);
+
+  // Draw enemies
+  ctx.fillStyle = '#ff4757';
+  enemies.forEach(e => ctx.fillRect(e.x, e.y, e.w, e.h));
+
+  // Draw projectiles
+  ctx.fillStyle = '#ffd700';
+  projectiles.forEach(p => ctx.fillRect(p.x, p.y, p.w, p.h));
+
+  // HUD
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 18px monospace';
+  ctx.fillText('Score: ' + score, 10, 30);
+  ctx.fillText('Lives: ' + lives, CANVAS_W - 110, 30);
+}
+
+function drawGameOver() {
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 36px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('GAME OVER', CANVAS_W/2, CANVAS_H/2 - 30);
+  ctx.font = '20px monospace';
+  ctx.fillText('Score: ' + score, CANVAS_W/2, CANVAS_H/2 + 10);
+  ctx.fillText('Press R to restart', CANVAS_W/2, CANVAS_H/2 + 45);
+  ctx.textAlign = 'left';
+}
+
+addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if (e.key === ' ' || e.code === 'Space') {
+    e.preventDefault();
+    if (!gameOver) projectiles.push({ x: player.x + player.w/2 - 2.5, y: player.y - 10, w: 5, h: 10 });
+  }
+  if (e.key === 'r' || e.key === 'R') { cancelAnimationFrame(animId); init(); animId = requestAnimationFrame(update); }
+});
+addEventListener('keyup', e => { keys[e.key] = false; });
+
+init();
+animId = requestAnimationFrame(update);
+
+==================================================
+VISUAL POLISH (required)
+==================================================
+
+- Dark background (#1a1a2e or similar)
+- Player: bright color (e.g. #00d4ff)
+- Enemies/objects: contrasting color (e.g. #ff4757)
+- HUD: white text, top-left for score, top-right for lives
+- Font: "20px monospace" or "16px Arial"
+- Game Over: centered text, semi-transparent overlay
+
+==================================================
+STRICT OUTPUT FORMAT
+==================================================
+
+Return EXACTLY three code blocks in this order:
+
+```html
+[complete index.html]
+```
+
+```css
+[complete style.css]
+```
+
+```javascript
+[complete game.js]
+```
+
+- No explanations. No text outside code blocks.
+- index.html must link style.css and game.js.
+- Game must run immediately when index.html is opened.
+- Do NOT use placeholder comments like "// add collision here".
+- Every mechanic in the plan must be fully implemented.

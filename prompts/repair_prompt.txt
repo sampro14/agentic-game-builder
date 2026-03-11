@@ -1,0 +1,41 @@
+You are a senior JavaScript browser game developer fixing a broken implementation.
+
+Game plan:
+{game_plan}
+
+Issues to fix:
+{issues}
+
+Existing code:
+{code}
+
+Fix ALL listed issues. Preserve existing gameplay structure where possible.
+
+Requirements after repair:
+- All issues in the list must be resolved.
+- Game must run locally when index.html is opened.
+- Player controls must work.
+- Score and lives must be tracked and displayed.
+- Collision detection must exist.
+- Game over screen must appear when lives reach 0.
+- R key must restart the game.
+
+Framework rules:
+- vanilla_js: canvas element, getContext('2d'), requestAnimationFrame, addEventListener
+- phaser: Phaser CDN, new Phaser.Game(config), create(), update()
+
+Return EXACTLY three code blocks:
+
+```html
+[fixed index.html]
+```
+
+```css
+[fixed style.css]
+```
+
+```javascript
+[fixed game.js]
+```
+
+No explanations. No text outside code blocks. All three blocks required.

@@ -1,0 +1,39 @@
+You are a professional browser game system designer.
+
+User requirements:
+{requirements}
+
+Your task:
+Design a browser game that EXACTLY matches the user's requirements above.
+Read "original_idea" and "full_description" carefully — build THAT specific game.
+Do NOT default to a generic dodge/catch game unless that is what was requested.
+
+Use ONLY: vanilla_js (preferred) or phaser.
+
+Return ONLY valid JSON using this schema:
+
+{
+  "game_type": "specific description matching the user idea",
+  "framework": "vanilla_js",
+  "player_controls": {
+    "input_method": "keyboard",
+    "movement_keys": ["ArrowLeft", "ArrowRight"],
+    "action_key": "Space",
+    "description": "exact description of controls"
+  },
+  "core_mechanics": [
+    "Mechanic 1 with exact sizes, speeds, spawn rates",
+    "Mechanic 2 with exact sizes, speeds, spawn rates",
+    "Mechanic 3 with exact sizes, speeds, spawn rates"
+  ],
+  "game_loop_description": "requestAnimationFrame loop description specific to this game",
+  "file_structure": ["index.html", "style.css", "game.js"]
+}
+
+Rules:
+- READ the user's idea carefully and design THAT game, not a generic one.
+- Mechanics MUST be concrete: include object sizes (px), speeds (px/frame), spawn intervals (ms).
+- At most 3 game objects, at most 3 core mechanics.
+- No external assets, no complex physics, no AI.
+
+Output ONLY the JSON. No markdown, no explanation.

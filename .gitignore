@@ -1,0 +1,26 @@
+# Secret — never commit
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Generated output (evaluator generates their own)
+output/
+
+# Local dev cache
+.cache/
+
+# Debug traces
+debug/
+runs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

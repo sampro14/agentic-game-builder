@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agentic Game Builder AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#0d0d14; --surface:#13131f; --border:#1e1e30;
+      --accent:#7c3aed; --accent2:#06b6d4; --green:#10b981;
+      --red:#ef4444; --yellow:#f59e0b; --text:#e2e8f0;
+      --muted:#64748b; --radius:12px;
+    }
+    html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;line-height:1.6}
+    .layout{display:grid;grid-template-columns:420px 1fr;height:100vh;overflow:hidden}
+    .panel-left{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+    .logo{padding:28px 28px 20px;border-bottom:1px solid var(--border)}
+    .logo h1{font-size:1.15rem;font-weight:700;letter-spacing:-.02em;background:linear-gradient(135deg,#7c3aed,#06b6d4);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+    .logo p{font-size:.78rem;color:var(--muted);margin-top:4px}
+    .steps{padding:20px 28px;display:flex;flex-direction:column;gap:6px;border-bottom:1px solid var(--border)}
+    .step-item{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:.82rem;color:var(--muted);transition:color .3s}
+    .step-item.active{color:var(--text)} .step-item.done{color:var(--green)}
+    .step-dot{width:26px;height:26px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0;transition:all .3s}
+    .step-item.active .step-dot{background:var(--accent);color:#fff}
+    .step-item.done .step-dot{background:var(--green);color:#fff}
+    .form-area{padding:24px 28px;display:flex;flex-direction:column;gap:18px;flex:1}
+    label{font-size:.78rem;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;display:block;margin-bottom:6px}
+    textarea,input[type=text]{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:.9rem;padding:12px 14px;resize:vertical;outline:none;transition:border-color .2s}
+    textarea:focus,input[type=text]:focus{border-color:var(--accent)}
+    textarea{min-height:90px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:var(--radius);font-family:'Space Grotesk',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;border:none;transition:all .2s}
+    .btn-primary{background:var(--accent);color:#fff;width:100%;justify-content:center}
+    .btn-primary:hover:not(:disabled){background:#6d28d9}
+    .btn-primary:disabled{opacity:.45;cursor:not-allowed}
+    .btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:.78rem;padding:7px 14px}
+    .btn-ghost:hover{border-color:var(--accent);color:var(--text)}
+    .questions-block{display:flex;flex-direction:column;gap:14px}
+    .question-item label{color:var(--accent2)}
+    .tag{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:600;padding:3px 9px;border-radius:6px;letter-spacing:.04em}
+    .tag-green{background:#10b98118;color:var(--green);border:1px solid #10b98130}
+    .tag-red{background:#ef444418;color:var(--red);border:1px solid #ef444430}
+    .tag-yellow{background:#f59e0b18;color:var(--yellow);border:1px solid #f59e0b30}
+    .tag-blue{background:#06b6d418;color:var(--accent2);border:1px solid #06b6d430}
+    .panel-right{display:flex;flex-direction:column;overflow:hidden}
+    .panel-right-header{padding:18px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface)}
+    .panel-right-header h2{font-size:.88rem;font-weight:600;color:var(--muted)}
+    .tabs{display:flex;gap:6px;padding:14px 28px 0;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto}
+    .tab{padding:8px 14px;font-size:.78rem;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+    .tab.active{color:var(--accent2);border-bottom-color:var(--accent2)}
+    .tab:hover:not(.active){color:var(--text)}
+    .tab-content{flex:1;overflow:hidden;display:none;flex-direction:column}
+    .tab-content.active{display:flex}
+    .log-terminal{flex:1;overflow-y:auto;padding:20px 28px;font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.8}
+    .log-line{display:flex;gap:12px}
+    .log-line .ts{color:var(--muted);flex-shrink:0}
+    .log-line .msg-step{color:var(--accent2);font-weight:600}
+    .log-line .msg-agent{color:#a78bfa}
+    .log-line .msg-success{color:var(--green)}
+    .log-line .msg-error{color:var(--red)}
+    .log-line .msg-warn{color:var(--yellow)}
+    .log-line .msg-info{color:var(--text)}
+    .log-cursor{display:inline-block;width:8px;height:14px;background:var(--accent2);animation:blink 1s step-end infinite;vertical-align:middle}
+    @keyframes blink{50%{opacity:0}}
+    .plan-scroll{flex:1;overflow-y:auto;padding:16px 0}
+    .plan-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin:0 28px 14px}
+    .plan-card-title{font-size:.72rem;font-weight:700;color:var(--accent2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
+    .plan-row{display:flex;gap:8px;margin-bottom:8px;font-size:.8rem}
+    .plan-label{color:var(--muted);flex-shrink:0;min-width:80px}
+    .plan-value{color:var(--text)}
+    .mechanic-item{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:.75rem;color:#cbd5e1;margin-bottom:5px;font-family:'JetBrains Mono',monospace;line-height:1.5}
+    .val-card{border-radius:var(--radius);padding:14px 20px;margin:0 28px 14px;font-size:.8rem}
+    .val-card.passed{background:#10b98110;border:1px solid #10b98130}
+    .val-card.failed{background:#ef444410;border:1px solid #ef444430}
+    .val-card.repaired{background:#06b6d410;border:1px solid #06b6d430}
+    .val-card-title{font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+    .val-issue{color:var(--yellow);padding:3px 0;display:flex;gap:6px;font-size:.78rem}
+    .val-issue::before{content:"⚠";flex-shrink:0}
+    .preview-wrap{flex:1;display:flex;align-items:center;justify-content:center;background:#080810;padding:24px;overflow:auto}
+    .preview-frame-wrap{box-shadow:0 0 60px #7c3aed40;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+    #gamePreview{display:block;width:480px;height:640px;border:none;background:#000}
+    .preview-placeholder{width:480px;height:640px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--muted);font-size:.85rem;border:1px dashed var(--border);border-radius:8px}
+    .preview-placeholder .icon{font-size:3rem}
+    .code-viewer{flex:1;overflow-y:auto;padding:20px 28px}
+    .code-file{margin-bottom:28px}
+    .code-file-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .code-file-name{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--accent2);font-weight:600}
+    pre{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:.74rem;line-height:1.7;color:#cbd5e1;max-height:400px}
+    .status-bar{padding:10px 28px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;gap:16px;font-size:.76rem;color:var(--muted)}
+    .status-dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+    .status-dot.running{background:var(--yellow);animation:pulse 1s infinite}
+    .status-dot.done{background:var(--green)}
+    .status-dot.error{background:var(--red)}
+    @keyframes pulse{50%{opacity:.4}}
+    .spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .download-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+    .btn-download{background:#10b98118;border:1px solid #10b98140;color:var(--green);border-radius:8px;padding:6px 14px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:'JetBrains Mono',monospace;text-decoration:none}
+    .btn-download:hover{background:#10b98130}
+    @media(max-width:900px){.layout{grid-template-columns:1fr}.panel-right{display:none}}
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="panel-left">
+    <div class="logo">
+      <h1>🎮 Agentic Game Builder AI</h1>
+      <p>Describe any game idea → get playable code</p>
+    </div>
+    <div class="steps">
+      <div class="step-item" id="stepClarify"><div class="step-dot">1</div><span>Requirements Clarification</span></div>
+      <div class="step-item" id="stepPlan"><div class="step-dot">2</div><span>Game Planning</span></div>
+      <div class="step-item" id="stepBuild"><div class="step-dot">3</div><span>Code Generation</span></div>
+      <div class="step-item" id="stepValidate"><div class="step-dot">4</div><span>Validation &amp; Repair</span></div>
+    </div>
+    <div class="form-area">
+      <div id="ideaSection">
+        <label>Game Idea</label>
+        <textarea id="ideaInput" placeholder="e.g. A space shooter where you dodge asteroids and shoot enemies…" rows="4"></textarea>
+        <div style="margin-top:10px">
+          <button class="btn btn-primary" id="btnClarify">✦ Analyse Idea</button>
+        </div>
+      </div>
+      <div id="questionsSection" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <label style="margin:0">Clarifying Questions</label>
+          <span class="tag tag-yellow">⚡ 3 questions max</span>
+        </div>
+        <div class="questions-block" id="questionsList"></div>
+        <div style="margin-top:16px">
+          <button class="btn btn-primary" id="btnBuild">🚀 Build Game</button>
+        </div>
+      </div>
+      <div id="resultSection" style="display:none">
+        <div style="margin-bottom:12px"><div id="validationBadge"></div></div>
+        <div class="download-row" id="downloadRow"></div>
+        <div style="margin-top:14px">
+          <button class="btn btn-ghost" id="btnReset">↩ Build Another</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="panel-right">
+    <div class="panel-right-header">
+      <h2>Output</h2>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="statusText" style="font-size:.78rem;color:var(--muted)">Idle</span>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab active" data-tab="log">📋 Agent Log</div>
+      <div class="tab" data-tab="plan">🗺 Game Plan</div>
+      <div class="tab" data-tab="validation">✅ Validation</div>
+      <div class="tab" data-tab="preview">🎮 Preview</div>
+      <div class="tab" data-tab="code">📄 Source</div>
+    </div>
+
+    <div class="tab-content active" data-content="log">
+      <div class="log-terminal" id="logTerminal">
+        <div class="log-line"><span class="ts">--:--:--</span><span class="msg-info">Agent pipeline ready. Enter a game idea to begin.</span></div>
+        <div class="log-line"><span class="ts"></span><span class="log-cursor"></span></div>
+      </div>
+    </div>
+
+    <div class="tab-content" data-content="plan">
+      <div class="plan-scroll" id="planTabContent">
+        <div style="padding:40px 28px;color:var(--muted);font-size:.85rem">Game plan will appear here after the planning phase completes.</div>
+      </div>
+    </div>
+
+    <div class="tab-content" data-content="validation">
+      <div class="plan-scroll" id="validationTabContent">
+        <div style="padding:40px 28px;color:var(--muted);font-size:.85rem">Validation &amp; repair results will appear here after the build.</div>
+      </div>
+    </div>
+
+    <div class="tab-content" data-content="preview">
+      <div class="preview-wrap">
+        <div id="previewPlaceholder" class="preview-placeholder">
+          <span class="icon">🎮</span>
+          <span>Game preview will appear here</span>
+          <span style="font-size:.75rem;color:var(--muted)">Build a game to see it live</span>
+        </div>
+        <div class="preview-frame-wrap" id="previewFrameWrap" style="display:none">
+          <iframe id="gamePreview" title="Game Preview" sandbox="allow-scripts allow-same-origin"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-content" data-content="code">
+      <div class="code-viewer" id="codeViewer">
+        <p style="color:var(--muted);font-size:.85rem">Generated source files will appear here after the build.</p>
+      </div>
+    </div>
+
+    <div class="status-bar">
+      <div class="status-dot" id="statusDot2"></div>
+      <span id="statusText2">Ready</span>
+      <span style="margin-left:auto" id="iterationInfo"></span>
+    </div>
+  </main>
+</div>
+
+<script>
+let currentIdea='',generatedFiles={};
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  document.querySelector('[data-tab="'+name+'"]').classList.add('active');
+  document.querySelector('[data-content="'+name+'"]').classList.add('active');
+}
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click',()=>switchTab(tab.dataset.tab));
+});
+
+const logTerminal=document.getElementById('logTerminal');
+function ts(){return new Date().toTimeString().slice(0,8);}
+function log(message,type='info'){
+  const cursor=logTerminal.querySelector('.log-cursor');
+  if(cursor)cursor.parentElement.remove();
+  const div=document.createElement('div');
+  div.className='log-line';
+  div.innerHTML='<span class="ts">'+ts()+'</span><span class="msg-'+type+'">'+esc(message)+'</span>';
+  logTerminal.appendChild(div);
+  const cl=document.createElement('div');
+  cl.className='log-line';
+  cl.innerHTML='<span class="ts"></span><span class="log-cursor"></span>';
+  logTerminal.appendChild(cl);
+  logTerminal.scrollTop=logTerminal.scrollHeight;
+}
+function setStep(id,state){const el=document.getElementById(id);if(el)el.className='step-item '+state;}
+function setStatus(text,type=''){
+  ['statusDot','statusDot2'].forEach(id=>{
+    document.getElementById(id).className='status-dot'+(type?' '+type:'');
+  });
+  document.getElementById('statusText').textContent=text;
+  document.getElementById('statusText2').textContent=text;
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// Clarify
+document.getElementById('btnClarify').addEventListener('click',async()=>{
+  const idea=document.getElementById('ideaInput').value.trim();
+  if(!idea){alert('Please enter a game idea.');return;}
+  currentIdea=idea;
+  const btn=document.getElementById('btnClarify');
+  btn.disabled=true;btn.innerHTML='<div class="spinner"></div> Analysing…';
+  setStatus('Clarifying…','running');setStep('stepClarify','active');
+  log('Sending idea to clarifier agent…');
+  try{
+    const res=await fetch('/clarify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idea})});
+    const data=await res.json();
+    if(data.error)throw new Error(data.error);
+    setStep('stepClarify','done');
+    if(data.already_clear||!data.questions||data.questions.length===0){
+      log('Idea fully specified — skipping clarification','success');
+      showBuildDirectly();
+    }else{
+      log(data.questions.length+' clarifying question(s) generated','agent');
+      showQuestions(data.questions);
+    }
+  }catch(err){
+    log('Error: '+err.message,'error');setStatus('Error','error');
+    btn.disabled=false;btn.innerHTML='✦ Analyse Idea';
+  }
+});
+
+function showQuestions(questions){
+  const list=document.getElementById('questionsList');list.innerHTML='';
+  questions.forEach((q,i)=>{
+    const div=document.createElement('div');div.className='question-item';
+    div.innerHTML='<label>Q'+(i+1)+'. '+esc(q)+'</label><input type="text" id="answer'+i+'" placeholder="Your answer…" />';
+    list.appendChild(div);
+  });
+  document.getElementById('ideaSection').style.display='none';
+  document.getElementById('questionsSection').style.display='block';
+  setStatus('Waiting for answers…');
+  log('Please answer the clarifying questions in the left panel','info');
+}
+function showBuildDirectly(){
+  document.getElementById('ideaSection').style.display='none';
+  document.getElementById('questionsSection').style.display='block';
+  document.getElementById('questionsList').innerHTML='<p style="font-size:.83rem;color:var(--green)">✓ Requirements fully specified — ready to build!</p>';
+  setStatus('Ready to build');
+}
+
+// Build
+document.getElementById('btnBuild').addEventListener('click',async()=>{
+  const answerInputs=document.querySelectorAll('[id^="answer"]');
+  const answers=Array.from(answerInputs).map(el=>el.value.trim()||'not specified');
+  const btn=document.getElementById('btnBuild');
+  btn.disabled=true;btn.innerHTML='<div class="spinner"></div> Building…';
+  setStep('stepPlan','active');setStatus('Running pipeline…','running');
+  log('Starting agent pipeline…','step');
+  switchTab('log');
+  try{
+    const response=await fetch('/build/stream',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({idea:currentIdea,answers})
+    });
+    const reader=response.body.getReader();
+    const decoder=new TextDecoder();
+    let buffer='',currentEvent='';
+    while(true){
+      const{done,value}=await reader.read();
+      if(done)break;
+      buffer+=decoder.decode(value,{stream:true});
+      const lines=buffer.split('\n');
+      buffer=lines.pop();
+      for(const line of lines){
+        if(line.startsWith('event:'))currentEvent=line.slice(6).trim();
+        else if(line.startsWith('data:')){
+          try{handleSSE(currentEvent||'progress',JSON.parse(line.slice(5).trim()));}catch(_){}
+          currentEvent='';
+        }
+      }
+    }
+  }catch(err){
+    log('Stream error: '+err.message,'error');setStatus('Error','error');
+    btn.disabled=false;btn.innerHTML='🚀 Build Game';
+  }
+});
+
+function handleSSE(event,payload){
+  if(event==='progress'){
+    const pm={clarify:'stepClarify',plan:'stepPlan',build:'stepBuild',validate:'stepValidate'};
+    if(payload.phase&&pm[payload.phase])setStep(pm[payload.phase],'active');
+    log(payload.message||payload.phase,'step');
+    return;
+  }
+  if(event==='plan_output'){
+    setStep('stepPlan','done');setStep('stepBuild','active');
+    renderPlanCard(payload);
+    log('Game plan ready — see 🗺 Game Plan tab','agent');
+    return;
+  }
+  if(event==='validation_output'){
+    setStep('stepValidate',payload.passed?'done':'active');
+    renderValidationCard(payload);
+    if(payload.passed)log('✓ Validation passed','success');
+    else if(payload.iterations>0)log('⚠ '+payload.iterations+' repair pass(es) applied','warn');
+    else log('⚠ Validation issues detected','warn');
+    return;
+  }
+  if(event==='done'||payload.files){
+    generatedFiles=payload.files;onBuildComplete(payload);return;
+  }
+  if(event==='error'||payload.error){
+    log('Error: '+(payload.error||payload.message),'error');
+    setStatus('Error','error');
+    document.getElementById('btnBuild').disabled=false;
+    document.getElementById('btnBuild').innerHTML='🚀 Build Game';
+    return;
+  }
+  if(payload.message)log(payload.message,'agent');
+}
+
+function renderPlanCard(plan){
+  const mechanics=(plan.mechanics||[]).map(m=>'<div class="mechanic-item">'+esc(m)+'</div>').join('');
+  document.getElementById('planTabContent').innerHTML=
+    '<div class="plan-card">'+
+      '<div class="plan-card-title">📋 Game Design</div>'+
+      '<div class="plan-row"><span class="plan-label">Game Type</span><span class="plan-value">'+esc(plan.game_type||'')+'</span></div>'+
+      '<div class="plan-row"><span class="plan-label">Framework</span><span class="plan-value"><span class="tag tag-blue">'+esc(plan.framework||'')+'</span></span></div>'+
+      '<div class="plan-row"><span class="plan-label">Controls</span><span class="plan-value">'+esc(plan.controls||'')+'</span></div>'+
+      '<div class="plan-row"><span class="plan-label">Game Loop</span><span class="plan-value" style="color:var(--muted);font-size:.76rem">'+esc(plan.game_loop||'')+'</span></div>'+
+    '</div>'+
+    '<div class="plan-card">'+
+      '<div class="plan-card-title">⚙️ Core Mechanics</div>'+
+      (mechanics||'<span style="color:var(--muted)">No mechanics specified</span>')+
+    '</div>';
+  // Auto-switch to plan tab
+  setTimeout(()=>switchTab('plan'),300);
+}
+
+function renderValidationCard(data){
+  const{passed,issues,iterations}=data;
+  const cls=passed?'passed':(iterations>0?'repaired':'failed');
+  const icon=passed?'✅':(iterations>0?'🔧':'❌');
+  const title=passed?'Validation Passed':(iterations>0?'Repaired after '+iterations+' pass(es)':'Validation Failed');
+  const color=passed?'var(--green)':(iterations>0?'var(--accent2)':'var(--red)');
+  const issueHtml=(issues&&issues.length)?issues.map(i=>'<div class="val-issue">'+esc(i)+'</div>').join(''):'<div style="color:var(--muted);font-size:.78rem">No issues found</div>';
+  const repairHtml=iterations>0?
+    '<div class="val-card repaired">'+
+      '<div class="val-card-title" style="color:var(--accent2)">🔧 Repair Applied</div>'+
+      '<div style="font-size:.78rem;color:var(--muted)">'+iterations+' repair pass(es) applied to resolve the issues above.</div>'+
+    '</div>':'';
+  document.getElementById('validationTabContent').innerHTML=
+    '<div class="val-card '+cls+'">'+
+      '<div class="val-card-title" style="color:'+color+'">'+icon+' '+title+'</div>'+
+      issueHtml+
+    '</div>'+
+    repairHtml+
+    '<div class="plan-card">'+
+      '<div class="plan-card-title">📊 Pipeline Summary</div>'+
+      '<div class="plan-row"><span class="plan-label">Result</span><span class="plan-value">'+(passed?'✓ Passed':'⚠ Best effort')+'</span></div>'+
+      '<div class="plan-row"><span class="plan-label">Issues</span><span class="plan-value">'+((issues||[]).length)+'</span></div>'+
+      '<div class="plan-row"><span class="plan-label">Repairs</span><span class="plan-value">'+iterations+'</span></div>'+
+    '</div>';
+}
+
+function onBuildComplete(data){
+  ['stepClarify','stepPlan','stepBuild','stepValidate'].forEach(id=>setStep(id,'done'));
+  setStatus('Done','done');
+  log('🎉 Build complete!','success');
+  const valid=(data.validation_result||'').toLowerCase().includes('true');
+  const issues=data.validation_issues||[];
+  const iters=data.iterations||0;
+  document.getElementById('iterationInfo').textContent='Repairs: '+iters;
+  document.getElementById('validationBadge').innerHTML=valid
+    ?'<span class="tag tag-green">✓ Validation Passed</span>'
+    :'<span class="tag tag-yellow">⚠ '+issues.length+' issue(s)</span>';
+  const dlRow=document.getElementById('downloadRow');dlRow.innerHTML='';
+  Object.entries(data.files).forEach(([name,content])=>{
+    const a=document.createElement('a');
+    a.className='btn-download';a.textContent='⬇ '+name;
+    a.href=URL.createObjectURL(new Blob([content],{type:'text/plain'}));
+    a.download=name;dlRow.appendChild(a);
+  });
+  document.getElementById('questionsSection').style.display='none';
+  document.getElementById('resultSection').style.display='block';
+  loadPreview(data.files);
+  populateCodeViewer(data.files);
+}
+
+function loadPreview(files){
+  let inlined=(files['index.html']||'')
+    .replace(/<link[^>]+style\.css[^>]*>/gi,'<style>'+(files['style.css']||'')+'</style>')
+    .replace(/<script[^>]+game\.js[^>]*><\/script>/gi,'<script>'+(files['game.js']||'')+'<\/script>');
+  document.getElementById('previewPlaceholder').style.display='none';
+  document.getElementById('previewFrameWrap').style.display='block';
+  document.getElementById('gamePreview').srcdoc=inlined;
+  setTimeout(()=>switchTab('preview'),800);
+}
+
+function populateCodeViewer(files){
+  const viewer=document.getElementById('codeViewer');viewer.innerHTML='';
+  Object.entries(files).forEach(([name,content])=>{
+    const div=document.createElement('div');div.className='code-file';
+    div.innerHTML='<div class="code-file-header"><span class="code-file-name">'+name+'</span><span style="font-size:.72rem;color:var(--muted)">'+content.length.toLocaleString()+' chars</span></div><pre><code>'+esc(content)+'</code></pre>';
+    viewer.appendChild(div);
+  });
+}
+
+document.getElementById('btnReset').addEventListener('click',()=>{
+  currentIdea='';generatedFiles={};
+  document.getElementById('ideaInput').value='';
+  document.getElementById('ideaSection').style.display='block';
+  document.getElementById('questionsSection').style.display='none';
+  document.getElementById('resultSection').style.display='none';
+  document.getElementById('btnClarify').disabled=false;
+  document.getElementById('btnClarify').innerHTML='✦ Analyse Idea';
+  document.getElementById('previewPlaceholder').style.display='flex';
+  document.getElementById('previewFrameWrap').style.display='none';
+  document.getElementById('codeViewer').innerHTML='<p style="color:var(--muted);font-size:.85rem">Generated source files will appear here after the build.</p>';
+  document.getElementById('planTabContent').innerHTML='<div style="padding:40px 28px;color:var(--muted);font-size:.85rem">Game plan will appear here after planning phase.</div>';
+  document.getElementById('validationTabContent').innerHTML='<div style="padding:40px 28px;color:var(--muted);font-size:.85rem">Validation &amp; repair results will appear here after the build.</div>';
+  document.getElementById('iterationInfo').textContent='';
+  ['stepClarify','stepPlan','stepBuild','stepValidate'].forEach(id=>setStep(id,''));
+  setStatus('Idle');
+  logTerminal.innerHTML='<div class="log-line"><span class="ts">'+ts()+'</span><span class="msg-info">Pipeline reset. Ready for new game idea.</span></div><div class="log-line"><span class="ts"></span><span class="log-cursor"></span></div>';
+  switchTab('log');
+});
+</script>
+</body>
+</html>

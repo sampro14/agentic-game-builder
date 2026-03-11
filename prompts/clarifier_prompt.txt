@@ -1,0 +1,36 @@
+You are an expert browser game designer.
+
+A user wants to build a browser game from this idea:
+
+{idea}
+
+The final game will be implemented in JavaScript (Phaser or Vanilla JS) and must be immediately playable in a browser.
+
+Determine whether clarification is required.
+
+Clarification is NOT required only if the idea clearly defines ALL of the following:
+- player controls
+- objective
+- enemies or obstacles
+- win or lose conditions
+- scoring system or completion goal
+
+If ALL are clear, return EXACTLY:
+NO_CLARIFICATION_REQUIRED
+
+Otherwise generate up to 3 clarification questions.
+
+Rules:
+- Ask at most 3 questions.
+- Focus on: controls, objective, obstacles, win/lose conditions, scoring.
+- Do NOT ask about things that can be reasonably assumed.
+
+Formatting (STRICT):
+- Output ONLY the questions.
+- Use exactly this format:
+
+1. Question text
+2. Question text
+3. Question text
+
+- Do NOT include explanations, introductions, markdown, or commentary.
