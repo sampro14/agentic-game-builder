@@ -6,8 +6,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl \
 WORKDIR /app
 
 # Install dependencies first (cached layer)
-COPY requirement.txt .
-RUN pip install --no-cache-dir -r requirement.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy source code
 COPY . .
