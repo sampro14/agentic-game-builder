@@ -99,7 +99,7 @@ git clone https://github.com/sampro14/agentic-game-builder.git
 cd agentic-game-builder
 python -m venv venv
 source venv/bin/activate          # Windows: venv\Scripts\activate
-pip install -r requirement.txt
+pip install -r requirements.txt
 cp .env.example .env              # add OPENAI_API_KEY
 
 uvicorn app:app --reload          # web UI at http://localhost:8000
@@ -172,6 +172,10 @@ Built on **LangGraph** (stateful graph orchestration) with **LangChain + OpenAI*
 - [ ] **Token-level streaming** of each agent's output to the UI
 - [ ] **Asset generation:** sprites instead of coloured shapes
 - [ ] **Build history:** store, replay, fork and share previous builds
+
+## License
+
+[MIT](LICENSE)
 
 ---
 
